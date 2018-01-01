@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>threejs-mixamo</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #000;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+
+				background-color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+			}
+
+			#meminfo {
+				margin-top: 8px;
+				font-size: 10px;
+				display: none;
+			}
+
+			a {
+				color: #0af;
+			}
+		</style>
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<script src="https://threejs.org/build/three.js"></script>
+		<script src="https://threejs.org/examples/js/Detector.js"></script>
+		<!-- <script src="js/inflate.min.js"></script> -->
+		<script src="js/FBXLoader.js"></script>
+
+		<script>
+			var container;
+
+			var camera, scene, renderer;
+			var mesh, helper;
+			var mixer, action;
+
+			var clock = new THREE.Clock();
+
+			var mouseX = 0, mouseY = 0;
+
+			var windowHalfX = window.innerWidth / 2;
+			var windowHalfY = window.innerHeight / 2;
+
+			document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.getElementById( 'container' );
+
+				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.z = 400;
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xffffff );
+				scene.fog = new THREE.Fog( 0xffffff, 2000, 10000 );
+
+				scene.add( camera );
+
+				// LIGHTS
+
+				scene.add( new THREE.HemisphereLight( 0x111111, 0x444444 ) );
+
+				var light = new THREE.DirectionalLight( 0xebf3ff, 1.5 );
+				light.position.set( 100, -10, 500 );
+				scene.add( light );
+
+				// RENDERER
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				container.appendChild( renderer.domElement );
+
+				// LISTENERS
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				// LOADERS
+
+				// loadFBX();
+				loadJSON();
+
+			}
+
+			function loadFBX() {
+				// var url = 'models/ZombieKicking.fbx';
+				// var url = 'models/ZombieKicking_ASCII_6.fbx';
+				var url = 'models/ZombieKicking_ASCII_7.fbx';
+
+				var loader = new THREE.FBXLoader();
+				loader.load( url, ( object ) => {
+
+					mixer = new THREE.AnimationMixer(object);
+
+					action = this.mixer.clipAction( object.animations[0] );
+					action.play();
+
+					scene.add(object);
+
+				}, null, (e) => {
+					console.log('error', e);
+				});
+			}
+
+			function loadJSON() {
+				
+				// LOAD JSON
+
+				var loader = new THREE.JSONLoader();
+				loader.load( "models/ZombieKicking.json", function ( geometry, materials ) {
+
+					var material = new THREE.MeshStandardMaterial({
+						color: 0xEEEEEE,
+						skinning: true,
+						roughness: 0.9
+					});
+
+					mesh = new THREE.SkinnedMesh( geometry, material );
+					mesh.position.set( 0, -70, 0 );
+					scene.add( mesh );
+
+					helper = new THREE.SkeletonHelper( mesh );
+					helper.material.linewidth = 3;
+					scene.add( helper );
+
+					mixer = new THREE.AnimationMixer( mesh );
+
+					action = mixer.clipAction( geometry.animations[0] );
+					action.play();
+
+				} );
+			}
+
+			function onWindowResize() {
+
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function onDocumentMouseMove( event ) {
+
+				mouseX = ( event.clientX - windowHalfX ) / 4;
+				mouseY = ( event.clientY - windowHalfY ) / 4;
+
+			}
+
+			//
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+
+			}
+
+			function render() {
+
+				camera.position.x += ( mouseX - camera.position.x ) * .05;
+				camera.position.y = THREE.Math.clamp( camera.position.y + ( - mouseY - camera.position.y ) * .05, 0, 1000 );
+
+				camera.lookAt( scene.position );
+
+				if( mixer ) {
+
+					mixer.update( clock.getDelta() );
+
+				}
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+</html>

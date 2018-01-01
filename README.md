@@ -1,2 +1,4 @@
 # tutorial-threejs-mixamo
-Files to support the video tutorial Three.js + Mixamo + Blender + BVH
+Files supporting the video tutorial Three.js + Mixamo + Blender + BVH
+
+https://www.youtube.com/watch?v=ksXxO2iZL18
